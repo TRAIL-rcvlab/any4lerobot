@@ -1,0 +1,5 @@
+task-rules:
+  - "1**": "pick the banana"
+  - "banana*": "place the banana to the box"
+
+# 根据正则表达式匹配文件夹名称，设置任务

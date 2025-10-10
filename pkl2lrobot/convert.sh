@@ -1,0 +1,14 @@
+uv run ./pkl2lrobot/dataset_convert.py \
+    --src-dir data/pkl/move_banana_to_box/default1 \
+    --output-dir ./data/lrobot/move_banana_to_box \
+    --fps 30 \
+    --use-videos \
+    --robot-type "franka research 3" \
+    --repo_id "luobai/test1" \
+    --image-writer-threads 4 \
+    --image-writer-process 2 \
+    --image-width 640 \
+    --image-height 480 \
+    --task-text "move the banana to the box" \
+    --push-to-hub \
+    --tags "franka research 3" "manipulation" "pick and place" \
