@@ -13,6 +13,7 @@ from lerobot.datasets.lerobot_dataset import LeRobotDataset, LeRobotDatasetMetad
 import shutil
 import yaml
 import re
+import inspect
 try:
     from PIL import PngImagePlugin
     PngImagePlugin.DEBUG = False
@@ -126,7 +127,22 @@ class Config:
                 "dtype": "video" if self.use_videos else "image",
                 "shape": [480, 640, 3],
                 "names": ["height", "width", "rgb"],
-            }
+            },
+            "timestamp": {
+                "dtype": "float32",
+                "shape": (1,),
+                "names": None,
+            },
+            "frame_index": {
+                "dtype": "int64",
+                "shape": (1,),
+                "names": None,
+            },
+            "episode_index": {
+                "dtype": "int64",
+                "shape": (1,),
+                "names": None,
+            },
         }
         return features
 
@@ -159,6 +175,13 @@ class DatasetConverter:
             image_writer_processes=self.config.image_writer_process,
         )
 
+        # Detect lerobot API version once
+        try:
+            add_frame_params = list(inspect.signature(lerobot_dataset.add_frame).parameters)
+        except Exception:
+            add_frame_params = []
+        is_v21_api = len(add_frame_params) >= 2 and add_frame_params[1] == "task"
+
         episode_length = len(self.data)
         
         for i in range(episode_length):
@@ -183,8 +206,16 @@ class DatasetConverter:
                 else:
                     task_text=self.config.task_text
 
-                frame_data["task"] = task_text
-                lerobot_dataset.add_frame(frame_data)
+                if is_v21_api:
+                    timestamp = float(t / float(self.config.fps))
+                    lerobot_dataset.add_frame(frame_data, task_text, timestamp=timestamp)
+                else:
+                    timestamp = np.float32(t / float(self.config.fps))
+                    frame_data["timestamp"] = np.array([timestamp], dtype=np.float32)
+                    frame_data["frame_index"] = np.array([t], dtype=np.int64)
+                    frame_data["episode_index"] = np.array([i], dtype=np.int64)
+                    frame_data["task"] = task_text
+                    lerobot_dataset.add_frame(frame_data)
 
             lerobot_dataset.save_episode()
 
