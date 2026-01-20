@@ -1,0 +1,14 @@
+uv run ./pkl2lrobot/dataset_convert.py `
+    --src-dir data/offline `
+    --output-dir ./data/lrobot/move_cup_to_shelf `
+    --fps 30 `
+    --use-videos `
+    --robot-type "franka research 3" `
+    --repo_id "luobai/move_cup_to_shelf" `
+    --image-writer-threads 4 `
+    --image-writer-process 2 `
+    --image-width 640 `
+    --image-height 480 `
+    --task-text "move cup to shelf" `
+    --push-to-hub `
+    --tags "franka research 3" "manipulation" "pick and place"

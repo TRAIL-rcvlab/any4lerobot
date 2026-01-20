@@ -13,6 +13,11 @@ from lerobot.datasets.lerobot_dataset import LeRobotDataset, LeRobotDatasetMetad
 import shutil
 import yaml
 import re
+try:
+    from PIL import PngImagePlugin
+    PngImagePlugin.DEBUG = False
+except Exception:
+    pass
 
 from pkl import PklReader
 
@@ -58,10 +63,10 @@ class Data:
     def preprocess(self,source_data: list[Dict[str, Any]]):
         self.base_rgb = [item['base_rgb'] for item in source_data]
         self.base_depth = [item['base_depth'] for item in source_data]
-        self.joint_positions = [item['joint_positions'][:7] for item in source_data] # 只取前7个关节(单臂)
-        self.joint_velocities = [item['joint_velocities'][:7] for item in source_data]
+        self.joint_positions = [np.asarray(item['joint_positions'][:7]) for item in source_data] # 只取前7个关节(单臂)
+        self.joint_velocities = [np.asarray(item['joint_velocities'][:7]) for item in source_data]
         self.ee_pos_quat = [item['ee_pos_quat'] for item in source_data]
-        self.gripper_position = [item['gripper_position'] for item in source_data]
+        self.gripper_position = [np.atleast_1d(item['gripper_position'])[:1] for item in source_data]
         # self.check_image(self.base_rgb[0])    
 
     def __post_init__(self):#init之后执行的函数，检查图像，对数据做预处理
@@ -160,8 +165,11 @@ class DatasetConverter:
             episode_data = self.data[i]
             num_steps = len(episode_data.base_rgb)
             for t in range(num_steps - 1):
-                state=np.float32(np.concatenate([episode_data.joint_positions[t],episode_data.gripper_position[t]]))
-                state_v=np.float32(np.concatenate([episode_data.joint_velocities[t], episode_data.gripper_position[t]]))
+                joint_pos = np.atleast_1d(episode_data.joint_positions[t])
+                gripper_pos = np.atleast_1d(episode_data.gripper_position[t])
+                joint_vel = np.atleast_1d(episode_data.joint_velocities[t])
+                state = np.float32(np.concatenate([joint_pos, gripper_pos]))
+                state_v = np.float32(np.concatenate([joint_vel, gripper_pos]))
                 frame_data = {
                     "observation.state": state,
                     "observation.velocities": state_v,
@@ -175,7 +183,8 @@ class DatasetConverter:
                 else:
                     task_text=self.config.task_text
 
-                lerobot_dataset.add_frame(frame_data, task_text)
+                frame_data["task"] = task_text
+                lerobot_dataset.add_frame(frame_data)
 
             lerobot_dataset.save_episode()
 

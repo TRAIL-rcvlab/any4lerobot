@@ -1,14 +1,14 @@
 uv run ./pkl2lrobot/dataset_convert.py \
-    --src-dir data/pkl/move_banana_to_box/default1 \
-    --output-dir ./data/lrobot/move_banana_to_box \
+    --src-dir data/offline \
+    --output-dir ./data/lrobot/move_cup_to_shelf \
     --fps 30 \
     --use-videos \
     --robot-type "franka research 3" \
-    --repo_id "luobai/test1" \
+    --repo_id "luobai/rcvlab1" \
     --image-writer-threads 4 \
     --image-writer-process 2 \
     --image-width 640 \
     --image-height 480 \
-    --task-text "move the banana to the box" \
+    --task-text "move cup to shelf" \
     --push-to-hub \
     --tags "franka research 3" "manipulation" "pick and place" \
